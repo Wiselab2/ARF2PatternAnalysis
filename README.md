@@ -4,8 +4,6 @@
 
 1. Normalized Read Counts
 
-
-
 2. Calculate Averages and Standard Error
 
 3. Include Annotation, Differential Expression and Log2 Fold Change Data
