@@ -2,10 +2,6 @@
 title: "Expression pattern analysis by gene"
 author: "Priyanka Surana"
 date: "17/09/2019"
-#output:
-#  word_document: default
-#  html_document:
-#    df_print: paged
 output: html_notebook
 ---
 
