@@ -1,0 +1,154 @@
+---
+title: "Expression pattern analysis by gene"
+author: "Priyanka Surana"
+date: "17/09/2019"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "~/Dropbox (Sydney Uni)/RogerWise/PatternAnalysisFinal/")
+```
+
+1. Normalize Read Counts
+```{r Normalize, echo = FALSE}
+# normalized read counts with NA substituted with -0.1
+rc = counts = read.csv("data/GeneCounts.csv", row.names = 1)
+rc = rc[c(grep("EPl|AGP|HOR", rownames(rc), value = TRUE)),]
+rc[] = lapply(rc, as.numeric)
+rc = log2(rc)
+rc[rc == -Inf] = -0.9
+rc[is.na(rc)] = -0.1
+```
+
+2. Calculate Averages and Standard Error
+```{r AvgsStderrs, echo = FALSE}
+# average read counts & standard error
+sem = function(x){
+	sd(x)/sqrt(length(x))
+}
+
+avg_se = function(df){
+	n = ncol(df)/3
+	df2 = data.frame(row.names = rownames(df))
+	df3 = data.frame(row.names = rownames(df))
+	for(i in 1:n){
+		m = (i-1)*3
+		df2[,i] = rowMeans(df[,(m+1):(m+3)])
+		df3[,i] = apply(df[,(m+1):(m+3)], 1, sem)
+	}
+	
+	colnames(df2) = paste0(unique(sapply(colnames(df), function(x){ strsplit(x, "_r")[[1]][1] }, USE.NAMES = FALSE)), "_avg")
+	df2 = df2[,sort(colnames(df2))]
+	
+	colnames(df3) = paste0(unique(sapply(colnames(df), function(x){ strsplit(x, "_r")[[1]][1] }, USE.NAMES = FALSE)), "_sem")
+	df3 = df3[,sort(colnames(df3))]
+	
+	df4 = merge(df2, df3, by="row.names")
+	colnames(df4)[1] = "gene"
+	return(df4)
+}
+
+rc2 = avg_se(rc)
+```
+
+3. Include Annotation, Differential Expression and Log2 Fold Change Data
+```{r DiffExpL2FC, echo = FALSE}
+# annotation
+ann = read.csv("data/BarleyAnnotation.csv")
+
+# differential expression results
+de = read.csv("data/DifferntialExpression.csv")
+
+# log2 fold change results
+l2fc = read.csv("data/Log2FoldChange.csv")
+
+# final data set
+df = merge(rc2, de)
+df = merge(df, l2fc)
+```
+
+4. Remove High Standard Error Genes
+```{r RemoveErrorGenes, echo = FALSE}
+# remove genes with high std err.
+df2 = df
+n = nrow(df2)
+gois = c()
+for(i in 1:n){
+	sems = df2[i,14:25]
+	if(length(sems[sems > 1]) == 0){
+		gois = c(gois, df2[i,1])
+	}
+}
+df = subset(df2, df2$gene %in% gois)
+```
+
+5. Pattern Analysis - ARF2 (HORVU5Hr1G111500)
+```{r PatternAnalysisARF2, echo = FALSE}
+cat("Using mostly log2 fold change (restricted)\n")
+cat("Adjusted p-value: <= 0.001 for timepoint 20; No limits set for other timepoints\n")
+cat("Log2 fold change: < .5 and > -.5 for timepoints 0, 16, 24, 32, 48; > 1 for timepoint 20\n")
+p1 = subset(df, df$t0_wt_mla6_log2FoldChange < .5 & df$t0_wt_mla6_log2FoldChange > -.5 & df$t16_wt_mla6_log2FoldChange < .5 & df$t16_wt_mla6_log2FoldChange > -.5 & df$t20_wt_mla6_padj <= 0.001 & df$t20_wt_mla6_log2FoldChange > 1 & df$t24_wt_mla6_log2FoldChange < .5 & df$t24_wt_mla6_log2FoldChange > -.5 & df$t32_wt_mla6_log2FoldChange < .5 & df$t32_wt_mla6_log2FoldChange > -.5 & df$t48_wt_mla6_log2FoldChange < .5 & df$t48_wt_mla6_log2FoldChange > -.5)
+cat("Number of genes:", nrow(p1), "\n")
+cat("Gene names:", p1$gene)
+
+#Writing dataset to file
+#Annotation for genes of interest
+data = subset(ann, ann$gene %in% p1$gene)
+#Add original read count data
+data = merge(data, counts, by.x = "gene", by.y = "row.names")
+#Add adjusted p-values for differential expression
+data = merge(data, de, by = "gene")
+#Add log2 fold change values
+data = merge(data, l2fc, by = "gene")
+#Write dataset to file
+write.csv(data, "ARF2LikeGenes.csv", row.names = FALSE)
+```
+
+- Checking to see if any of the genes using mostly log2 fold change (restricted) align with Barley1 probesets in 1HS or 2HL eQTL
+```{r eqtlARF2, echo = FALSE}
+map = read.csv("data/BarleyGenomeMicroarrayMap.csv")
+map = subset(map, map$gc_percent_coverage >= 95 & map$gc_percent_identity >= 95)[,c("hv_gene", "probeset")]
+eqtl=read.csv("data/eQTL.csv", header=TRUE)[,1:6]
+colnames(eqtl) = c("probeset", "qvalue_16h", "most_associated_marker_16h", "qvalue_32h", "most_associated_marker_32h", "bb4_expression_pattern")
+eqtl16 = subset(eqtl, eqtl$qvalue_16h <= 1e-3 & eqtl$most_associated_marker_16h %in% c("2H.63", "2H.65", "2H.66", "2H.67", "2H.68"))
+eqtl32 = subset(eqtl, eqtl$qvalue_32h <= 1e-3 & eqtl$most_associated_marker_32h %in% c("1H.03", "1H.04", "1H.05", "1H.06", "1H.07", "1H.08"))
+gois = subset(map, map$probeset %in% eqtl16$probeset | map$probeset %in% eqtl32$probeset)
+output = subset(gois, gois$hv_gene %in% p1$gene)
+output = merge(output, eqtl, by="probeset")
+rownames(output) = NULL
+
+cat("Number of overlapping genes:", length(unique(output$hv_gene)), "\n")
+cat("Overlapping gene - probeset pairs:", "\n")
+output
+```
+
+6. Remove Low Read Count Genes
+```{r RemoveLowGenes, echo = FALSE}
+df3 = subset(df, df$mla6_0_avg > 8 & df$mla6_16_avg > 8 & df$mla6_20_avg > 8 & df$mla6_24_avg > 8 & df$mla6_32_avg > 8 & df$mla6_48_avg > 8 & df$WT_0_avg > 8 & df$WT_16_avg > 8 & df$WT_20_avg > 8 & df$WT_24_avg > 8 & df$WT_32_avg > 8 & df$WT_48_avg > 8)
+cat("Genes in original dataset:", nrow(df2), "\n")
+cat("Genes after removing for high standard error:", nrow(df), "\n")
+cat("Genes after also removing for low read counts:", nrow(df3), "\n")
+df = df3
+```
+
+7. Repeat Pattern Analysis - ARF2 (HORVU5Hr1G111500).
+```{r PatternAnalysis2ARF2, echo = FALSE}
+cat("Using mostly log2 fold change (restricted)\n")
+cat("Adjusted p-value: <= 0.001 for timepoint 20; No limits set for other timepoints\n")
+cat("Log2 fold change: < .5 and > -.5 for timepoints 0, 16, 24, 32, 48; > 1 for timepoint 20\n")
+p1 = subset(df, df$t0_wt_mla6_log2FoldChange < .5 & df$t0_wt_mla6_log2FoldChange > -.5 & df$t16_wt_mla6_log2FoldChange < .5 & df$t16_wt_mla6_log2FoldChange > -.5 & df$t20_wt_mla6_padj <= 0.001 & df$t20_wt_mla6_log2FoldChange > 1 & df$t24_wt_mla6_log2FoldChange < .5 & df$t24_wt_mla6_log2FoldChange > -.5 & df$t32_wt_mla6_log2FoldChange < .5 & df$t32_wt_mla6_log2FoldChange > -.5 & df$t48_wt_mla6_log2FoldChange < .5 & df$t48_wt_mla6_log2FoldChange > -.5)
+cat("Number of genes:", nrow(p1), "\n")
+cat("Gene names:", p1$gene)
+```
+
+- Checking to see if any of the genes from method #4 (Using mostly log2 fold change - restricted) align with Barley1 probesets in 1HS or 2HL eQTL
+```{r eqtl2ARF2, echo = FALSE}
+output = subset(gois, gois$hv_gene %in% p1$gene)
+output = merge(output, eqtl, by="probeset")
+rownames(output) = NULL
+
+cat("Number of overlapping genes:", length(unique(output$hv_gene)), "\n")
+cat("Overlapping gene - probeset pairs:", "\n")
+output
+```
