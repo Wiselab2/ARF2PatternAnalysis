@@ -2,8 +2,6 @@
 
 ### <div align="center"> Identifying Genes With ARF2-like Expression Pattern </div> 
 
-The work here is done for "Manuscript Title" by Authors.
-
 This data set utilizes barley transcriptome sequenced and quantified for wildtype (*Mla6*) and mutant (*mla6*) at 6 timepoints (0, 16, 20, 24, 32 and 48 hours after infection) for 3 replications. ARF2 (HORVU5Hr1G111500) like genes are identified using expression pattern analysis.
 
 **Normalized Read Counts**
