@@ -4,10 +4,6 @@
 
 This data set utilizes barley transcriptome sequenced and quantified for wildtype (*Mla6*) and mutant (*mla6*) at 6 timepoints (0, 16, 20, 24, 32 and 48 hours after infection) for 3 replications. ARF2 (HORVU5Hr1G111500) like genes are identified using expression pattern analysis.
 
-- All input files are in [data](data/)
-- R script in markdown format and resulting knit files are stored under [R](R/)
-- [ARF2LikeGenes](ARF2LikeGenes.csv) details the 85 ARF2-like genes identified using expression pattern analysis
-
 **Normalized Read Counts**
 </br> Salmon (Patro *et al.* 2017) was used to quantify gene-counts using genome alignments from STAR (Dobin *et al.* 2013). Count normalization was done in a taxon-specific manner, as described in Klingenberg and Meinicke 2017. Log2 of normalized read counts are used to calculate averages and standard error for each genotype x timepoint combination.
 
@@ -28,6 +24,13 @@ This data set utilizes barley transcriptome sequenced and quantified for wildtyp
 
 **Repeat Pattern Analysis**
 </br> Step (5) is repeated but without low read count genes.
+
+----
+
+**_Data Release_**
+- All input files are in [data](data/)
+- R script in markdown format and resulting knit files are stored under [R](R/)
+- [ARF2LikeGenes](ARF2LikeGenes.csv) details the 85 ARF2-like genes identified using expression pattern analysis
 
 ----
 
