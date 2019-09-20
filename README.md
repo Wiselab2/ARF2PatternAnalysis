@@ -30,7 +30,7 @@ This data set utilizes barley transcriptome sequenced and quantified for wildtyp
 **_Data Release_**
 - All input files are in [data](data/)
 - R script in markdown format and resulting knit files are stored under [R](R/)
-- [ARF2LikeGenes](ARF2LikeGenes.csv) details the 85 ARF2-like genes identified using expression pattern analysis
+- [ARF2LikeGenes](ARF2LikeGenes.xlsx) details the 85 ARF2-like genes identified using expression pattern analysis
 
 ----
 
