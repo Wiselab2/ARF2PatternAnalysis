@@ -11,7 +11,7 @@ This data set utilizes barley transcriptome sequenced and quantified for wildtyp
 </br> Annotation performed using InterProScan (Jones *et al.* 2014) is read along with differential expression and log2 fold change data. Differential expression was performed using using R package DESeq2 in Bioconductor (Love *et al.* 2014). 
 
 **eQTL Data**
-</br> Expression quantitative trait loci (eQTL) information was obtained from Surana et al. 2017.
+</br> Expression quantitative trait loci (eQTL) information was obtained from Surana *et al.* 2017.
 
 **Remove High Standard Error Genes**
 </br> A gene with a standard error greater than 1 for any genotype x timepoint combination is removed.
